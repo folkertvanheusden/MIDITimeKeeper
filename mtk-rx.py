@@ -36,6 +36,9 @@ start = time.time()
 
 values = []
 
+psec = None
+rate = None
+
 while not abort:
     msg = port.receive()
     ns = time.time_ns()
@@ -51,22 +54,23 @@ while not abort:
         frame = msg.data[7]
 
         code = msg.data[4] >> 5
-        mul = 0
         if code == 0:
-            mul = 1 / 24.0
+            rate = 24
         elif code == 1:
-            mul = 1 / 25.0
+            rate = 25
         elif code == 2:
-            mul = 1 / 29.97
+            rate = 29.97
         elif code == 3:
-            mul = 1 / 30.0
+            rate = 30
 
         t_rx = time.mktime((tm.tm_year, tm.tm_mon, tm.tm_mday, h, m, s, tm.tm_wday, tm.tm_yday, tm.tm_isdst))  # , tm.tm_zone, tm.tm_gmtoff
-        t_rx += frame * mul
+        t_rx += frame * 1.0 / rate
 
         values.append((t, t_rx))
 
-        print(f'{time.ctime(t)}\t{time.ctime(t_rx)}\t{t - t_rx:.3f}')
+        if s != psec:
+            psec = s
+            print(f'{time.ctime(t)}\t{time.ctime(t_rx)}\t{t - t_rx:.3f}')
 
     if t - start > duration:
         break
@@ -80,7 +84,7 @@ fh.close()
 
 use_values = [ v[1] for v in values ]
 
-a = allantools.Dataset(data = use_values)
+a = allantools.Dataset(data=use_values, rate=rate)
 a.compute("adev")
 
 # Plot it using the Plot class
