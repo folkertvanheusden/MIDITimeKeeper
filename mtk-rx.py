@@ -82,7 +82,9 @@ for pair in values:
 
 fh.close()
 
-use_values = [ v[1] for v in values ]
+# treat it as a PPS (well, rate-pulses-per-second) signal
+# for which the local (v[0] == t) timestamp is stored
+use_values = [ v[0] for v in values ]
 
 a = allantools.Dataset(data=use_values, rate=rate)
 a.compute("adev")
